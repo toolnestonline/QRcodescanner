@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Free online QR code scanner. Scan QR codes directly from your device's camera in real-time.">
+    <meta name="keywords" content="QR code scanner, scan QR code, QR reader, online QR scanner, free QR code reader">
+    <title>QR Code Scanner | Free Online QR Code Reader</title>
+    <style>
+        :root {
+            --primary-color: #4285f4;
+            --secondary-color: #34a853;
+            --error-color: #ea4335;
+            --light-color: #f8f9fa;
+            --dark-color: #202124;
+            --border-radius: 8px;
+            --box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--light-color);
+            color: var(--dark-color);
+            line-height: 1.6;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            color: var(--primary-color);
+            margin-bottom: 10px;
+            font-size: 2.2rem;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+        }
+
+        .scanner-container {
+            position: relative;
+            width: 100%;
+            max-width: 500px;
+            margin: 0 auto 20px;
+            border-radius: var(--border-radius);
+            overflow: hidden;
+        }
+
+        #qr-video {
+            width: 100%;
+            display: block;
+            background-color: var(--dark-color);
+        }
+
+        #qr-canvas {
+            display: none;
+        }
+
+        .scan-region {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 70%;
+            height: 70%;
+            border: 4px dashed rgba(255, 255, 255, 0.7);
+            border-radius: var(--border-radius);
+            pointer-events: none;
+        }
+
+        .result-container {
+            text-align: center;
+            margin: 20px 0;
+            padding: 15px;
+            border-radius: var(--border-radius);
+            background-color: #f0f0f0;
+            min-height: 60px;
+        }
+
+        #qr-result {
+            word-break: break-all;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background-color 0.3s;
+            margin: 5px;
+        }
+
+        .btn:hover {
+            background-color: #3367d6;
+        }
+
+        .btn-secondary {
+            background-color: #5f6368;
+        }
+
+        .btn-secondary:hover {
+            background-color: #4d5156;
+        }
+
+        .btn-success {
+            background-color: var(--secondary-color);
+        }
+
+        .btn-success:hover {
+            background-color: #2d9248;
+        }
+
+        .btn-danger {
+            background-color: var(--error-color);
+        }
+
+        .btn-danger:hover {
+            background-color: #d33426;
+        }
+
+        .controls {
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .help-section {
+            margin-top: 30px;
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-radius: var(--border-radius);
+            display: none;
+        }
+
+        .help-section h2 {
+            color: var(--primary-color);
+            margin-bottom: 15px;
+        }
+
+        .help-section ol {
+            padding-left: 20px;
+            margin-bottom: 15px;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            color: #5f6368;
+            font-size: 0.9rem;
+        }
+
+        @media (max-width: 600px) {
+            h1 {
+                font-size: 1.8rem;
+            }
+            
+            .container {
+                padding: 15px;
+            }
+            
+            .scan-region {
+                width: 80%;
+                height: 80%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>QR Code Scanner</h1>
+            <p>Scan QR codes using your device's camera</p>
+        </header>
+
+        <div class="scanner-container">
+            <video id="qr-video" playsinline></video>
+            <canvas id="qr-canvas"></canvas>
+            <div class="scan-region"></div>
+        </div>
+
+        <div class="result-container">
+            <div id="qr-result">Scanning will appear here...</div>
+        </div>
+
+        <div class="controls">
+            <button id="start-btn" class="btn btn-success">Start Scanner</button>
+            <button id="stop-btn" class="btn btn-danger" disabled>Stop Scanner</button>
+            <button id="toggle-help" class="btn btn-secondary">Help</button>
+        </div>
+
+        <div class="help-section" id="help-section">
+            <h2>How to use the QR Code Scanner</h2>
+            <ol>
+                <li>Click the "Start Scanner" button to activate your camera.</li>
+                <li>Allow camera permissions when prompted by your browser.</li>
+                <li>Point your camera at a QR code. Make sure it's within the scanning area.</li>
+                <li>The scanner will automatically detect and display the QR code content.</li>
+                <li>Click "Stop Scanner" when you're done to turn off the camera.</li>
+            </ol>
+            <h3>Troubleshooting</h3>
+            <ul>
+                <li><strong>Camera not working:</strong> Make sure you've granted camera permissions and no other app is using the camera.</li>
+                <li><strong>QR code not scanning:</strong> Ensure good lighting and the QR code is fully visible in the scanning area.</li>
+                <li><strong>Mobile users:</strong> Some mobile browsers may require you to hold the device steady for a few seconds.</li>
+            </ul>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <p>Free Online QR Code Scanner - No ads, no tracking, no data collection</p>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const video = document.getElementById('qr-video');
+            const canvas = document.getElementById('qr-canvas');
+            const resultDiv = document.getElementById('qr-result');
+            const startBtn = document.getElementById('start-btn');
+            const stopBtn = document.getElementById('stop-btn');
+            const toggleHelpBtn = document.getElementById('toggle-help');
+            const helpSection = document.getElementById('help-section');
+            
+            let scanning = false;
+            let stream = null;
+            let canvasContext = canvas.getContext('2d');
+            
+            // Toggle help section
+            toggleHelpBtn.addEventListener('click', () => {
+                helpSection.style.display = helpSection.style.display === 'block' ? 'none' : 'block';
+                toggleHelpBtn.textContent = helpSection.style.display === 'block' ? 'Hide Help' : 'Help';
+            });
+            
+            // Start scanner
+            startBtn.addEventListener('click', async () => {
+                try {
+                    stream = await navigator.mediaDevices.getUserMedia({
+                        video: { facingMode: "environment" }
+                    });
+                    
+                    video.srcObject = stream;
+                    video.play();
+                    
+                    startBtn.disabled = true;
+                    stopBtn.disabled = false;
+                    scanning = true;
+                    
+                    resultDiv.textContent = "Scanning...";
+                    
+                    requestAnimationFrame(scan);
+                } catch (err) {
+                    console.error("Error accessing camera:", err);
+                    resultDiv.textContent = "Error accessing camera. Please make sure you've granted camera permissions.";
+                }
+            });
+            
+            // Stop scanner
+            stopBtn.addEventListener('click', () => {
+                if (stream) {
+                    stream.getTracks().forEach(track => track.stop());
+                    stream = null;
+                }
+                
+                video.srcObject = null;
+                scanning = false;
+                
+                startBtn.disabled = false;
+                stopBtn.disabled = true;
+                
+                resultDiv.textContent = "Scanner stopped. Click 'Start Scanner' to scan again.";
+            });
+            
+            // Scan function
+            function scan() {
+                if (!scanning) return;
+                
+                if (video.readyState === video.HAVE_ENOUGH_DATA) {
+                    canvas.height = video.videoHeight;
+                    canvas.width = video.videoWidth;
+                    
+                    canvasContext.drawImage(video, 0, 0, canvas.width, canvas.height);
+                    
+                    const imageData = canvasContext.getImageData(0, 0, canvas.width, canvas.height);
+                    const code = jsQR(imageData.data, imageData.width, imageData.height, {
+                        inversionAttempts: "dontInvert",
+                    });
+                    
+                    if (code) {
+                        resultDiv.innerHTML = `<strong>Scanned Result:</strong><br>${formatResult(code.data)}`;
+                        
+                        // Optional: vibrate on successful scan (mobile devices)
+                        if (navigator.vibrate) {
+                            navigator.vibrate(200);
+                        }
+                    }
+                }
+                
+                requestAnimationFrame(scan);
+            }
+            
+            // Format the result based on content type
+            function formatResult(data) {
+                // Check if it's a URL
+                if (data.startsWith('http://') || data.startsWith('https://')) {
+                    return `<a href="${data}" target="_blank" rel="noopener">${data}</a>`;
+                }
+                
+                // Check if it's an email
+                if (data.startsWith('mailto:')) {
+                    const email = data.substring(7);
+                    return `<a href="${data}">${email}</a>`;
+                }
+                
+                // Check if it's a phone number
+                if (data.startsWith('tel:')) {
+                    const phone = data.substring(4);
+                    return `<a href="${data}">${phone}</a>`;
+                }
+                
+                // Default: plain text
+                return data;
+            }
+            
+            // For better SEO, add structured data
+            const structuredData = {
+                "@context": "https://schema.org",
+                "@type": "WebApplication",
+                "name": "QR Code Scanner",
+                "description": "Free online QR code scanner that works directly in your browser.",
+                "applicationCategory": "UtilitiesApplication",
+                "operatingSystem": "Any"
+            };
+            
+            const scriptTag = document.createElement('script');
+            scriptTag.type = 'application/ld+json';
+            scriptTag.text = JSON.stringify(structuredData);
+            document.head.appendChild(scriptTag);
+        });
+    </script>
+</body>
+</html>
